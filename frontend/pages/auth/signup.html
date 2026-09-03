@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sign Up - CBX vs. The World</title>
+  <link rel="stylesheet" href="../../style.css">
+  <style>
+    .auth-container { min-height: 100vh; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #0f1f3f 0%, #1a2f5f 100%); }
+    .auth-card { background: var(--color-dark-lightest); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: var(--space-2xl); width: 100%; max-width: 450px; }
+    .auth-card h1 { color: var(--color-primary); margin-bottom: var(--space-lg); text-align: center; }
+    .text-center { margin: var(--space-lg) 0; color: var(--color-text-muted); text-align: center; }
+  </style>
+</head>
+<body>
+  <div class="auth-container">
+    <div class="auth-card">
+      <h1>Create Account</h1>
+      <div id="error-message" class="alert alert-error hidden"></div>
+      <div id="success-message" class="alert hidden" style="background: rgba(81, 207, 102, 0.1); border-left: 4px solid #51cf66; color: #51cf66;"></div>
+      <form id="signup-form">
+        <div class="form-group">
+          <label for="email">Email</label>
+          <input type="email" id="email" placeholder="you@example.com" required/>
+        </div>
+        <div class="form-group">
+          <label for="username">Username</label>
+          <input type="text" id="username" placeholder="@yourname" required/>
+        </div>
+        <div class="form-group">
+          <label for="password">Password</label>
+          <input type="password" id="password" placeholder="••••••••" required minlength="8"/>
+          <small style="color: var(--color-text-muted);">Minimum 8 characters</small>
+        </div>
+        <div class="form-group">
+          <label for="location">Location (Optional)</label>
+          <input type="text" id="location" placeholder="City, State"/>
+        </div>
+        <button type="submit" class="btn btn-full" style="padding: var(--space-lg) var(--space-2xl);">Create Account</button>
+      </form>
+      <div class="text-center">
+        Already have an account? <a href="/pages/auth/login.html">Sign in here</a>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../../config.js"></script>
+  <script src="../../app.js"></script>
+  <script>
+    document.getElementById('signup-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = document.getElementById('email').value;
+      const username = document.getElementById('username').value;
+      const password = document.getElementById('password').value;
+      const location = document.getElementById('location').value || null;
+      try {
+        const { data: authData, error: authError } = await window.supabaseClient.auth.signUp({ email, password });
+        if (authError) {
+          document.getElementById('error-message').textContent = authError.message;
+          document.getElementById('error-message').classList.remove('hidden');
+          return;
+        }
+        const { error: profileError } = await window.supabaseClient.from('judge_profiles').insert([{ user_id: authData.user.id, username, location, verified_judge: false, battles_judged: 0 }]);
+        if (profileError) {
+          document.getElementById('error-message').textContent = profileError.message;
+          document.getElementById('error-message').classList.remove('hidden');
+          return;
+        }
+        document.getElementById('success-message').textContent = 'Account created! Redirecting...';
+        document.getElementById('success-message').classList.remove('hidden');
+        setTimeout(() => { window.location.href = '/index.html'; }, 2000);
+      } catch (err) {
+        console.error(err);
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Judging - CBX vs. The World</title>
+  <link rel="stylesheet" href="../style.css">
+  <style>
+    .judging-wrapper { background: linear-gradient(135deg, #0f1f3f 0%, #1a2f5f 100%); min-height: 100vh; padding: 32px 16px; }
+    .judging-container { max-width: 1200px; margin: 0 auto; }
+    .tabs { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; margin-bottom: 48px; }
+    .tab-btn { padding: 16px; background: #1a2f5f; border: 2px solid #3a4f7f; color: white; cursor: pointer; border-radius: 8px; font-weight: bold; text-transform: uppercase; font-size: 12px; }
+    .tab-btn.active { background: #c7ff00; color: #0f1f3f; border-color: #c7ff00; }
+    .scoring-panel { background: #1a2f5f; border: 2px solid #3a4f7f; border-radius: 16px; padding: 48px; }
+    .scoring-content { display: none; }
+    .scoring-content.active { display: block; }
+    .category-title { font-size: 32px; color: #c7ff00; text-transform: uppercase; text-align: center; margin-bottom: 16px; }
+    .score-grid { display: grid; grid-template-columns: repeat(10, 1fr); gap: 8px; margin-bottom: 32px; }
+    .score-btn { aspect-ratio: 1 / 1; background: #0f1f3f; border: 2px solid #3a4f7f; color: white; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 18px; }
+    .score-btn:hover { border-color: #c7ff00; }
+    .score-btn.selected { background: #c7ff00; color: #0f1f3f; border-color: #c7ff00; }
+    .scoring-nav { display: flex; gap: 24px; justify-content: center; margin-top: 32px; }
+    @media (max-width: 768px) { .tabs { grid-template-columns: repeat(3, 1fr); } }
+  </style>
+</head>
+<body>
+  <nav>
+    <div class="nav-container">
+      <a href="/index.html" class="nav-logo">CBX VS. WORLD</a>
+      <div id="nav-auth"></div>
+    </div>
+  </nav>
+
+  <div class="judging-wrapper">
+    <div class="judging-container">
+      <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab('appearance')">APPEARANCE</button>
+        <button class="tab-btn" onclick="switchTab('aroma')">AROMA</button>
+        <button class="tab-btn" onclick="switchTab('cure')">CURE</button>
+        <button class="tab-btn" onclick="switchTab('flavor')">FLAVOR</button>
+        <button class="tab-btn" onclick="switchTab('smoke')">SMOKE</button>
+        <button class="tab-btn" onclick="switchTab('effects')">EFFECTS</button>
+      </div>
+
+      <div class="scoring-panel">
+        <div class="scoring-content active" id="appearance">
+          <h2 class="category-title">APPEARANCE</h2>
+          <p style="text-align: center; color: #8899bb; margin-bottom: 32px;">Visual presentation.</p>
+          <div class="score-grid" id="score-grid-appearance"></div>
+          <div class="scoring-nav">
+            <button class="btn btn-secondary" onclick="switchTab('appearance', false)">BACK</button>
+            <button class="btn" onclick="switchTab('aroma')">NEXT: AROMA</button>
+          </div>
+        </div>
+
+        <div class="scoring-content" id="aroma">
+          <h2 class="category-title">AROMA</h2>
+          <p style="text-align: center; color: #8899bb; margin-bottom: 32px;">Break a nug. Nose in the jar.</p>
+          <div class="score-grid" id="score-grid-aroma"></div>
+          <div class="scoring-nav">
+            <button class="btn btn-secondary" onclick="switchTab('appearance')">BACK</button>
+            <button class="btn" onclick="switchTab('cure')">NEXT</button>
+          </div>
+        </div>
+
+        <div class="scoring-content" id="cure">
+          <h2 class="category-title">CURE</h2>
+          <p style="text-align: center; color: #8899bb; margin-bottom: 32px;">Moisture content.</p>
+          <div class="score-grid" id="score-grid-cure"></div>
+          <div class="scoring-nav">
+            <button class="btn btn-secondary" onclick="switchTab('aroma')">BACK</button>
+            <button class="btn" onclick="switchTab('flavor')">NEXT</button>
+          </div>
+        </div>
+
+        <div class="scoring-content" id="flavor">
+          <h2 class="category-title">FLAVOR</h2>
+          <p style="text-align: center; color: #8899bb; margin-bottom: 32px;">Taste profile.</p>
+          <div class="score-grid" id="score-grid-flavor"></div>
+          <div class="scoring-nav">
+            <button class="btn btn-secondary" onclick="switchTab('cure')">BACK</button>
+            <button class="btn" onclick="switchTab('smoke')">NEXT</button>
+          </div>
+        </div>
+
+        <div class="scoring-content" id="smoke">
+          <h2 class="category-title">SMOKE</h2>
+          <p style="text-align: center; color: #8899bb; margin-bottom: 32px;">Burn quality.</p>
+          <div class="score-grid" id="score-grid-smoke"></div>
+          <div class="scoring-nav">
+            <button class="btn btn-secondary" onclick="switchTab('flavor')">BACK</button>
+            <button class="btn" onclick="switchTab('effects')">NEXT</button>
+          </div>
+        </div>
+
+        <div class="scoring-content" id="effects">
+          <h2 class="category-title">EFFECTS</h2>
+          <p style="text-align: center; color: #8899bb; margin-bottom: 32px;">How it hits.</p>
+          <div class="score-grid" id="score-grid-effects"></div>
+          <div class="scoring-nav">
+            <button class="btn btn-secondary" onclick="switchTab('smoke')">BACK</button>
+            <button class="btn" onclick="submitScores()">SUBMIT SCORES</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../config.js"></script>
+  <script src="../app.js"></script>
+
+  <script>
+    let battleId;
+    let scores = { appearance: null, aroma: null, cure: null, flavor: null, smoke: null, effects: null };
+
+    async function pageInit() {
+      await window.supabaseHelpers.requireAuth();
+      battleId = new URLSearchParams(window.location.search).get('id');
+      if (!battleId) { alert('No battle selected'); window.location.href = '/index.html'; return; }
+      renderScoreGrids();
+    }
+
+    function renderScoreGrids() {
+      const categories = ['appearance', 'aroma', 'cure', 'flavor', 'smoke', 'effects'];
+      categories.forEach(cat => {
+        const grid = document.getElementById(`score-grid-${cat}`);
+        grid.innerHTML = '';
+        for (let i = 1; i <= 10; i++) {
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = 'score-btn';
+          btn.textContent = i;
+          btn.onclick = () => selectScore(cat, i);
+          grid.appendChild(btn);
+        }
+      });
+    }
+
+    function selectScore(category, score) {
+      scores[category] = score;
+      const buttons = document.querySelectorAll(`#score-grid-${category} .score-btn`);
+      buttons.forEach(btn => btn.classList.remove('selected'));
+      buttons[score - 1].classList.add('selected');
+    }
+
+    function switchTab(category) {
+      const allContent = document.querySelectorAll('.scoring-content');
+      const allButtons = document.querySelectorAll('.tab-btn');
+      allContent.forEach(c => c.classList.remove('active'));
+      allButtons.forEach(b => b.classList.remove('active'));
+      document.getElementById(category).classList.add('active');
+      const cats = ['appearance', 'aroma', 'cure', 'flavor', 'smoke', 'effects'];
+      document.querySelectorAll('.tab-btn')[cats.indexOf(category)].classList.add('active');
+    }
+
+    async function submitScores() {
+      const allScored = Object.values(scores).every(s => s !== null);
+      if (!allScored) { alert('Please score all 6 categories'); return; }
+
+      try {
+        const user = await window.supabaseHelpers.getCurrentUser();
+        const { error } = await window.supabaseClient.from('judge_scores').insert([{
+          judge_id: user.id,
+          battle_id: battleId,
+          appearance: scores.appearance,
+          aroma: scores.aroma,
+          cure: scores.cure,
+          flavor: scores.flavor,
+          smoke: scores.smoke,
+          effects: scores.effects
+        }]);
+
+        if (error) { alert('Error: ' + error.message); return; }
+        alert('Scores submitted!');
+        window.location.href = '/index.html';
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    window.switchTab = switchTab;
+    window.submitScores = submitScores;
+  </script>
+</body>
+</html>
