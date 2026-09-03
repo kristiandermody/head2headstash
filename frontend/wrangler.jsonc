@@ -1,0 +1,11 @@
+{
+  "name": "head2headstash",
+  "compatibility_date": "2026-09-03",
+  "assets": {
+    "directory": ".",
+    "binding": "ASSETS"
+  },
+  "workers_dev": false,
+  "preview_urls": false,
+  "observability": true
+}
