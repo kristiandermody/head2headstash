@@ -6,6 +6,5 @@
     "binding": "ASSETS"
   },
   "workers_dev": false,
-  "preview_urls": false,
-  "observability": true
+  "preview_urls": false
 }
