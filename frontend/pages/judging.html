@@ -4,104 +4,40 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Judging - CBX vs. The World</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Archivo:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../style.css">
-  <style>
-    .judging-wrapper { background: linear-gradient(135deg, #0f1f3f 0%, #1a2f5f 100%); min-height: 100vh; padding: 32px 16px; }
-    .judging-container { max-width: 1200px; margin: 0 auto; }
-    .tabs { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; margin-bottom: 48px; }
-    .tab-btn { padding: 16px; background: #1a2f5f; border: 2px solid #3a4f7f; color: white; cursor: pointer; border-radius: 8px; font-weight: bold; text-transform: uppercase; font-size: 12px; }
-    .tab-btn.active { background: #c7ff00; color: #0f1f3f; border-color: #c7ff00; }
-    .scoring-panel { background: #1a2f5f; border: 2px solid #3a4f7f; border-radius: 16px; padding: 48px; }
-    .scoring-content { display: none; }
-    .scoring-content.active { display: block; }
-    .category-title { font-size: 32px; color: #c7ff00; text-transform: uppercase; text-align: center; margin-bottom: 16px; }
-    .score-grid { display: grid; grid-template-columns: repeat(10, 1fr); gap: 8px; margin-bottom: 32px; }
-    .score-btn { aspect-ratio: 1 / 1; background: #0f1f3f; border: 2px solid #3a4f7f; color: white; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 18px; }
-    .score-btn:hover { border-color: #c7ff00; }
-    .score-btn.selected { background: #c7ff00; color: #0f1f3f; border-color: #c7ff00; }
-    .scoring-nav { display: flex; gap: 24px; justify-content: center; margin-top: 32px; }
-    @media (max-width: 768px) { .tabs { grid-template-columns: repeat(3, 1fr); } }
-  </style>
 </head>
 <body>
-  <nav>
-    <div class="nav-container">
-      <a href="/index.html" class="nav-logo">CBX VS. WORLD</a>
-      <div id="nav-auth"></div>
-    </div>
-  </nav>
-
-  <div class="judging-wrapper">
-    <div class="judging-container">
-      <div class="tabs">
-        <button class="tab-btn active" onclick="switchTab('appearance')">APPEARANCE</button>
-        <button class="tab-btn" onclick="switchTab('aroma')">AROMA</button>
-        <button class="tab-btn" onclick="switchTab('cure')">CURE</button>
-        <button class="tab-btn" onclick="switchTab('flavor')">FLAVOR</button>
-        <button class="tab-btn" onclick="switchTab('smoke')">SMOKE</button>
-        <button class="tab-btn" onclick="switchTab('effects')">EFFECTS</button>
+  <div class="judging-shell">
+    <header class="judging-header">
+      <div class="container">
+        <a href="/index.html" class="nav-logo">CBX <span class="vs-word">VS.</span> THE WORLD<small id="battle-label">Smoke-Off</small></a>
+        <div class="progress-stepper" id="progress-stepper">
+          <span class="step done">Setup</span><span class="sep">&mdash;&mdash;</span>
+          <span class="step" id="step-judging">Judging</span><span class="sep">&mdash;&mdash;</span>
+          <span class="step" id="step-decision">Decision</span><span class="sep">&mdash;&mdash;</span>
+          <span class="step" id="step-results">Results</span>
+        </div>
+        <div class="autosave-note" id="autosave-note">&bull; Autosaved</div>
       </div>
+    </header>
 
-      <div class="scoring-panel">
-        <div class="scoring-content active" id="appearance">
-          <h2 class="category-title">APPEARANCE</h2>
-          <p style="text-align: center; color: #8899bb; margin-bottom: 32px;">Visual presentation.</p>
-          <div class="score-grid" id="score-grid-appearance"></div>
-          <div class="scoring-nav">
-            <button class="btn btn-secondary" onclick="switchTab('appearance', false)">BACK</button>
-            <button class="btn" onclick="switchTab('aroma')">NEXT: AROMA</button>
-          </div>
-        </div>
+    <div class="round-tabs" id="round-tabs"></div>
 
-        <div class="scoring-content" id="aroma">
-          <h2 class="category-title">AROMA</h2>
-          <p style="text-align: center; color: #8899bb; margin-bottom: 32px;">Break a nug. Nose in the jar.</p>
-          <div class="score-grid" id="score-grid-aroma"></div>
-          <div class="scoring-nav">
-            <button class="btn btn-secondary" onclick="switchTab('appearance')">BACK</button>
-            <button class="btn" onclick="switchTab('cure')">NEXT</button>
-          </div>
+    <div class="judging-body" id="judging-body">
+      <aside>
+        <div class="judging-photo-card" id="contender-a-card"></div>
+        <div class="judging-photo-card" id="contender-b-card"></div>
+        <div class="judging-note-box">
+          <strong>Score independently.</strong>
+          <p>Try both jars side by side, then give this round one score reflecting the head-to-head. You won't be asked to pick a winner until the Decision round.</p>
         </div>
+      </aside>
 
-        <div class="scoring-content" id="cure">
-          <h2 class="category-title">CURE</h2>
-          <p style="text-align: center; color: #8899bb; margin-bottom: 32px;">Moisture content.</p>
-          <div class="score-grid" id="score-grid-cure"></div>
-          <div class="scoring-nav">
-            <button class="btn btn-secondary" onclick="switchTab('aroma')">BACK</button>
-            <button class="btn" onclick="switchTab('flavor')">NEXT</button>
-          </div>
-        </div>
-
-        <div class="scoring-content" id="flavor">
-          <h2 class="category-title">FLAVOR</h2>
-          <p style="text-align: center; color: #8899bb; margin-bottom: 32px;">Taste profile.</p>
-          <div class="score-grid" id="score-grid-flavor"></div>
-          <div class="scoring-nav">
-            <button class="btn btn-secondary" onclick="switchTab('cure')">BACK</button>
-            <button class="btn" onclick="switchTab('smoke')">NEXT</button>
-          </div>
-        </div>
-
-        <div class="scoring-content" id="smoke">
-          <h2 class="category-title">SMOKE</h2>
-          <p style="text-align: center; color: #8899bb; margin-bottom: 32px;">Burn quality.</p>
-          <div class="score-grid" id="score-grid-smoke"></div>
-          <div class="scoring-nav">
-            <button class="btn btn-secondary" onclick="switchTab('flavor')">BACK</button>
-            <button class="btn" onclick="switchTab('effects')">NEXT</button>
-          </div>
-        </div>
-
-        <div class="scoring-content" id="effects">
-          <h2 class="category-title">EFFECTS</h2>
-          <p style="text-align: center; color: #8899bb; margin-bottom: 32px;">How it hits.</p>
-          <div class="score-grid" id="score-grid-effects"></div>
-          <div class="scoring-nav">
-            <button class="btn btn-secondary" onclick="switchTab('smoke')">BACK</button>
-            <button class="btn" onclick="submitScores()">SUBMIT SCORES</button>
-          </div>
-        </div>
+      <div class="judging-panel" id="judging-panel">
+        <div class="empty-state">Loading battle&hellip;</div>
       </div>
     </div>
   </div>
@@ -109,78 +45,223 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="../config.js"></script>
   <script src="../app.js"></script>
-
   <script>
-    let battleId;
-    let scores = { appearance: null, aroma: null, cure: null, flavor: null, smoke: null, effects: null };
+    const { productImage, battleLabel } = window.H2H;
+
+    const ROUNDS = [
+      { key: 'appearance', title: 'Appearance', prompt: 'Trim, color, structure, trichome coverage. Judge what you can see before you break it open.' },
+      { key: 'aroma', title: 'Aroma', prompt: 'Break a nug. Nose in the jar, not on it. Score what you actually smell, not what the label promised.' },
+      { key: 'cure', title: 'Cure', prompt: 'Moisture, snap, and burn-readiness. A great cure disappears; a bad one is all you notice.' },
+      { key: 'flavor', title: 'Flavor', prompt: 'First pull, mid pull, exhale. Does the smoke match the aroma, or does it fall apart?' },
+      { key: 'smoke', title: 'Smoke', prompt: 'Burn quality, ash color, harshness. Score the physical experience of smoking it.' },
+      { key: 'effects', title: 'Effects', prompt: 'Onset, intensity, duration. Judge the experience, not just the number on the jar.' },
+    ];
+
+    let battle, productA, productB, storageKey;
+    let scores = {};
+    let currentRound = 0;
+    let phase = 'judging'; // judging | decision | locked
+    let decisionPick = null;
 
     async function pageInit() {
       await window.supabaseHelpers.requireAuth();
-      battleId = new URLSearchParams(window.location.search).get('id');
-      if (!battleId) { alert('No battle selected'); window.location.href = '/index.html'; return; }
-      renderScoreGrids();
+      const battleId = new URLSearchParams(window.location.search).get('id');
+      if (!battleId) { window.location.href = '/index.html'; return; }
+
+      try {
+        const { data, error } = await window.supabaseClient
+          .from('battles')
+          .select('id, battle_number, status, closes_at, battle_products(role, product:products(*))')
+          .eq('id', battleId)
+          .maybeSingle();
+        if (error) throw error;
+        if (!data) { document.getElementById('judging-panel').innerHTML = '<div class="empty-state">This battle could not be found.</div>'; return; }
+        battle = data;
+        const products = (battle.battle_products || []).slice().sort((x, y) => x.role.localeCompare(y.role));
+        productA = products[0]?.product;
+        productB = products[1]?.product;
+        storageKey = `h2h-scorecard-${battle.id}`;
+
+        document.getElementById('battle-label').textContent = battleLabel(battle.battle_number);
+        document.title = `${battleLabel(battle.battle_number)} Judging - CBX vs. The World`;
+
+        loadProgress();
+        renderRoundTabs();
+        renderPhotoCards();
+        renderPanel();
+      } catch (err) {
+        console.error('judging pageInit', err);
+        document.getElementById('judging-panel').innerHTML = '<div class="empty-state">Couldn’t load this battle. Try refreshing.</div>';
+      }
     }
 
-    function renderScoreGrids() {
-      const categories = ['appearance', 'aroma', 'cure', 'flavor', 'smoke', 'effects'];
-      categories.forEach(cat => {
-        const grid = document.getElementById(`score-grid-${cat}`);
-        grid.innerHTML = '';
-        for (let i = 1; i <= 10; i++) {
-          const btn = document.createElement('button');
-          btn.type = 'button';
-          btn.className = 'score-btn';
-          btn.textContent = i;
-          btn.onclick = () => selectScore(cat, i);
-          grid.appendChild(btn);
-        }
+    function loadProgress() {
+      try {
+        const saved = JSON.parse(localStorage.getItem(storageKey) || '{}');
+        scores = saved.scores || {};
+        currentRound = saved.currentRound || 0;
+        phase = saved.phase || 'judging';
+        decisionPick = saved.decisionPick || null;
+      } catch { scores = {}; }
+    }
+
+    function saveProgress() {
+      localStorage.setItem(storageKey, JSON.stringify({ scores, currentRound, phase, decisionPick }));
+    }
+
+    function contenderImg(product) {
+      const src = product ? productImage(product) : '';
+      return src
+        ? `<img src="${src}" alt="${product.name}" onerror="this.replaceWith(Object.assign(document.createElement('div'), {className: 'img-placeholder'}))">`
+        : `<div class="img-placeholder"></div>`;
+    }
+
+    function renderPhotoCards() {
+      document.getElementById('contender-a-card').innerHTML = `
+        <div class="photo-frame">${contenderImg(productA)}</div>
+        <div class="photo-info"><div class="contender-label">Contender A</div><div class="contender-name" style="font-size:1.1rem;">${productA?.name || 'TBA'}</div></div>`;
+      document.getElementById('contender-b-card').innerHTML = `
+        <div class="photo-frame">${contenderImg(productB)}</div>
+        <div class="photo-info"><div class="contender-label">Contender B</div><div class="contender-name" style="font-size:1.1rem;">${productB?.name || 'TBA'}</div></div>`;
+    }
+
+    function renderRoundTabs() {
+      document.getElementById('round-tabs').innerHTML = ROUNDS.map((r, i) => {
+        const cls = phase !== 'judging' ? 'done' : (i === currentRound ? 'active' : (scores[r.key] != null ? 'done' : ''));
+        return `<div class="round-tab ${cls}">${r.title}</div>`;
+      }).join('');
+    }
+
+    function updateStepper() {
+      document.getElementById('step-judging').className = 'step' + (phase === 'judging' ? ' current' : '');
+      document.getElementById('step-decision').className = 'step' + (phase === 'decision' ? ' current' : '');
+      document.getElementById('step-results').className = 'step' + (phase === 'locked' ? ' current' : '');
+    }
+
+    function renderPanel() {
+      updateStepper();
+      renderRoundTabs();
+      const panel = document.getElementById('judging-panel');
+      if (phase === 'judging') { panel.innerHTML = judgingRoundMarkup(); attachRoundHandlers(); }
+      else if (phase === 'decision') { panel.innerHTML = decisionMarkup(); attachDecisionHandlers(); }
+      else { panel.innerHTML = lockedMarkup(); }
+    }
+
+    function judgingRoundMarkup() {
+      const round = ROUNDS[currentRound];
+      const value = scores[round.key];
+      const buttons = Array.from({ length: 10 }, (_, i) => i + 1)
+        .map(n => `<button type="button" class="score-tap-btn ${value === n ? 'selected' : ''}" data-score="${n}">${n}</button>`)
+        .join('');
+      const isLast = currentRound === ROUNDS.length - 1;
+      return `
+        <div class="round-eyebrow">Round ${currentRound + 1} of ${ROUNDS.length}</div>
+        <div class="round-heading">
+          <div><h2>${round.title}</h2></div>
+          <p>${round.prompt}</p>
+        </div>
+        <div class="score-tap-grid">${buttons}</div>
+        <div class="score-scale-labels"><span>1 &middot; Weak / Off</span><span>10 &middot; Reference</span></div>
+        <div class="judging-nav">
+          <button class="btn btn-secondary" id="round-back" ${currentRound === 0 ? 'disabled style="opacity:.4;cursor:not-allowed;"' : ''}>Back</button>
+          <button class="btn" id="round-next" ${value == null ? 'disabled style="opacity:.4;cursor:not-allowed;"' : ''}>${isLast ? 'Continue to Decision' : 'Next: ' + ROUNDS[currentRound + 1].title}</button>
+        </div>`;
+    }
+
+    function attachRoundHandlers() {
+      document.querySelectorAll('.score-tap-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          scores[ROUNDS[currentRound].key] = Number(btn.dataset.score);
+          saveProgress();
+          renderPanel();
+        });
+      });
+      document.getElementById('round-back').addEventListener('click', () => {
+        if (currentRound > 0) { currentRound -= 1; saveProgress(); renderPanel(); }
+      });
+      document.getElementById('round-next').addEventListener('click', () => {
+        if (scores[ROUNDS[currentRound].key] == null) return;
+        if (currentRound < ROUNDS.length - 1) { currentRound += 1; }
+        else { phase = 'decision'; }
+        saveProgress();
+        renderPanel();
       });
     }
 
-    function selectScore(category, score) {
-      scores[category] = score;
-      const buttons = document.querySelectorAll(`#score-grid-${category} .score-btn`);
-      buttons.forEach(btn => btn.classList.remove('selected'));
-      buttons[score - 1].classList.add('selected');
+    function decisionMarkup() {
+      return `
+        <div class="decision-panel">
+          <div class="round-eyebrow" style="justify-content:center; display:flex;">Decision</div>
+          <h2>If You Could Keep Only One,<br>Which Is It?</h2>
+          <p>Locked on submission. This is your personal call &mdash; your six round scores are what get submitted to the panel.</p>
+          <div class="decision-options">
+            <div class="decision-option ${decisionPick === 'A' ? 'selected' : ''}" data-pick="A">
+              <div class="contender-label" style="color:var(--color-acid);">Contender A</div>
+              <div class="contender-name">${productA?.name || 'TBA'}</div>
+            </div>
+            <div class="decision-option ${decisionPick === 'B' ? 'selected' : ''}" data-pick="B">
+              <div class="contender-label" style="color:var(--color-acid);">Contender B</div>
+              <div class="contender-name">${productB?.name || 'TBA'}</div>
+            </div>
+          </div>
+          <div class="judging-nav" style="border-top:none; justify-content:center; gap: var(--space-lg);">
+            <button class="btn btn-secondary" id="decision-back">Back to Judging</button>
+            <button class="btn" id="decision-submit" ${decisionPick ? '' : 'disabled style="opacity:.4;cursor:not-allowed;"'}>Lock In My Scorecard</button>
+          </div>
+        </div>`;
     }
 
-    function switchTab(category) {
-      const allContent = document.querySelectorAll('.scoring-content');
-      const allButtons = document.querySelectorAll('.tab-btn');
-      allContent.forEach(c => c.classList.remove('active'));
-      allButtons.forEach(b => b.classList.remove('active'));
-      document.getElementById(category).classList.add('active');
-      const cats = ['appearance', 'aroma', 'cure', 'flavor', 'smoke', 'effects'];
-      document.querySelectorAll('.tab-btn')[cats.indexOf(category)].classList.add('active');
+    function attachDecisionHandlers() {
+      document.querySelectorAll('.decision-option').forEach(el => {
+        el.addEventListener('click', () => { decisionPick = el.dataset.pick; saveProgress(); renderPanel(); });
+      });
+      document.getElementById('decision-back').addEventListener('click', () => {
+        phase = 'judging'; currentRound = ROUNDS.length - 1; saveProgress(); renderPanel();
+      });
+      document.getElementById('decision-submit').addEventListener('click', submitScorecard);
     }
 
-    async function submitScores() {
-      const allScored = Object.values(scores).every(s => s !== null);
-      if (!allScored) { alert('Please score all 6 categories'); return; }
-
+    async function submitScorecard() {
+      const btn = document.getElementById('decision-submit');
+      btn.disabled = true;
+      btn.textContent = 'Submitting…';
       try {
         const user = await window.supabaseHelpers.getCurrentUser();
         const { error } = await window.supabaseClient.from('judge_scores').insert([{
           judge_id: user.id,
-          battle_id: battleId,
+          battle_id: battle.id,
           appearance: scores.appearance,
           aroma: scores.aroma,
           cure: scores.cure,
           flavor: scores.flavor,
           smoke: scores.smoke,
-          effects: scores.effects
+          effects: scores.effects,
         }]);
-
-        if (error) { alert('Error: ' + error.message); return; }
-        alert('Scores submitted!');
-        window.location.href = '/index.html';
+        if (error) throw error;
+        phase = 'locked';
+        saveProgress();
+        renderPanel();
       } catch (err) {
-        console.error(err);
+        console.error('submitScorecard', err);
+        btn.disabled = false;
+        btn.textContent = 'Lock In My Scorecard';
+        alert('Couldn’t submit your scorecard: ' + (err.message || 'unknown error') + '\n\nYour scores are saved on this device — try again in a moment.');
       }
     }
 
-    window.switchTab = switchTab;
-    window.submitScores = submitScores;
+    function lockedMarkup() {
+      const avg = (Object.values(scores).reduce((a, b) => a + b, 0) / (Object.values(scores).length || 1)).toFixed(1);
+      return `
+        <div class="locked-panel">
+          <div class="lock-icon">&#128274;</div>
+          <h2>Your Scorecard Is Locked</h2>
+          <p>Results stay sealed until ${battle.closes_at ? new Date(battle.closes_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric' }) : 'judging closes'}. Your call: ${decisionPick === 'A' ? (productA?.name || 'Contender A') : (productB?.name || 'Contender B')} &middot; average score ${avg}.</p>
+          <div class="hero-buttons" style="justify-content:center;">
+            <a href="/pages/dashboard.html" class="btn">Go to Dashboard</a>
+            <a href="/index.html" class="btn btn-secondary">Back Home</a>
+          </div>
+        </div>`;
+    }
   </script>
 </body>
 </html>

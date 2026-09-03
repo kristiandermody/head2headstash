@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard - CBX vs. The World</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Archivo:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+  <header class="app-header">
+    <div class="container">
+      <a href="/index.html" class="nav-logo"><span class="vs-badge">VS</span><span>CBX <span class="vs-word">VS.</span> THE WORLD</span></a>
+      <ul class="app-nav-links">
+        <li><a href="/pages/dashboard.html" class="active">Dashboard</a></li>
+        <li><a href="/pages/profile.html">My Record</a></li>
+        <li><a href="/index.html#fight-card">Battles</a></li>
+        <li><a href="/index.html#verdicts">Archive</a></li>
+      </ul>
+      <div id="app-nav-auth"></div>
+    </div>
+  </header>
+
+  <section class="welcome-banner">
+    <div class="container">
+      <div>
+        <div class="eyebrow">Welcome Back, Judge</div>
+        <h1 id="welcome-username">@judge</h1>
+        <p id="welcome-meta"></p>
+      </div>
+      <div class="dash-stats" id="dash-stats">
+        <div><h3>&mdash;</h3><p>Judged</p></div>
+        <div><h3>&mdash;</h3><p>Verified</p></div>
+        <div><h3>&mdash;</h3><p>Open Battles</p></div>
+        <div><h3>&mdash;</h3><p>Member Since</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" style="padding-top: var(--space-xl); background: #f7f8fc; color: var(--color-navy-dark);">
+    <div class="container dash-grid">
+      <div>
+        <div class="section-head">
+          <div class="section-label"><span>Open Battles</span></div>
+          <a href="/index.html#fight-card" class="text-muted" style="font-size:13px; font-weight:700; text-transform:uppercase;">View All</a>
+        </div>
+        <div class="mini-battle-grid" id="open-battles">
+          <div class="empty-state">Loading&hellip;</div>
+        </div>
+
+        <div class="section-head"><div class="section-label"><span>Awaiting Results</span></div></div>
+        <div id="awaiting-results"><div class="empty-state">Loading&hellip;</div></div>
+
+        <div class="section-head" style="margin-top: var(--space-xl);"><div class="section-label"><span>Completed Battles</span></div></div>
+        <div class="completed-table" id="completed-battles"><div class="empty-state">Loading&hellip;</div></div>
+      </div>
+
+      <div>
+        <div class="side-card">
+          <div class="section-head" style="margin-bottom: var(--space-md);"><div class="section-label"><span>Palate Profile</span></div></div>
+          <div id="palate-profile"><div class="side-card-empty">Loading&hellip;</div></div>
+        </div>
+        <div class="upcoming-card">
+          <div class="section-head" style="margin-bottom: var(--space-md);"><div class="section-label"><span>Upcoming</span></div></div>
+          <div id="upcoming-list"><div class="empty-state">Loading&hellip;</div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../config.js"></script>
+  <script src="../app.js"></script>
+  <script>
+    const { productImage, fmtDate, fmtDateLong, daysUntil, initials, battleLabel, avgScore, categoryAverages } = window.H2H;
+
+    async function pageInit() {
+      await window.supabaseHelpers.requireAuth();
+      window.H2H.renderAppHeaderAuth('app-nav-auth');
+      const user = await window.supabaseHelpers.getCurrentUser();
+      const profile = await window.supabaseHelpers.getCurrentJudgeProfile();
+
+      renderWelcome(profile, user);
+      await Promise.all([
+        loadOpenBattles(),
+        loadMyScores(user.id, profile),
+        loadUpcoming(),
+      ]);
+    }
+
+    function renderWelcome(profile, user) {
+      const username = profile?.username || user.email;
+      document.getElementById('welcome-username').innerHTML = `@${username} ${profile?.verified_judge ? '<span class="status-pill" style="color:var(--color-acid);">Verified Judge &check;</span>' : ''}`;
+      document.getElementById('welcome-meta').textContent = [profile?.location, profile?.created_at ? `Judging since ${fmtDateLong(profile.created_at)}` : null].filter(Boolean).join(' · ');
+    }
+
+    async function loadOpenBattles() {
+      const el = document.getElementById('open-battles');
+      try {
+        const { data: battles, error } = await window.supabaseClient
+          .from('battles')
+          .select('id, battle_number, status, closes_at, battle_products(role, product:products(name, image_url))')
+          .in('status', ['open', 'scheduled'])
+          .order('opens_at', { ascending: true })
+          .limit(2);
+        if (error) throw error;
+
+        document.getElementById('dash-stats').children[2].querySelector('h3').textContent = battles?.length ?? 0;
+
+        if (!battles || battles.length === 0) {
+          el.innerHTML = '<div class="empty-state">No open battles right now.</div>';
+          return;
+        }
+        el.innerHTML = battles.map(b => {
+          const products = (b.battle_products || []).slice().sort((x, y) => x.role.localeCompare(y.role));
+          const [a, c] = products;
+          const days = daysUntil(b.closes_at);
+          const isOpen = b.status === 'open';
+          const photos = (a && c)
+            ? `<img src="${productImage(a.product)}" alt="${a.product.name}" onerror="this.src='';this.classList.add('img-placeholder')"><span class="vs-word">VS</span><img src="${productImage(c.product)}" alt="${c.product.name}" onerror="this.src='';this.classList.add('img-placeholder')">`
+            : `<div class="img-placeholder"></div><span class="vs-word">VS</span><div class="img-placeholder"></div>`;
+          const matchup = (a && c) ? `${a.product.name} <span class="vs-sep">vs.</span> ${c.product.name}` : 'Contenders TBA';
+          return `
+            <div class="mini-battle-card ${isOpen ? 'open-highlight' : ''}">
+              <div class="mini-battle-top"><span>${battleLabel(b.battle_number)}</span>${isOpen && days != null ? `<span class="days-left">${days} days left</span>` : ''}</div>
+              <div class="mini-battle-photos">${photos}</div>
+              <div class="mini-battle-matchup">${matchup}</div>
+              <button class="mini-battle-cta ${isOpen ? '' : 'secondary'}" onclick="window.location.href='${isOpen ? `/pages/judging.html?id=${b.id}` : `/pages/battle.html?id=${b.id}`}'">${isOpen ? 'Judge This Battle' : 'Get Both Contenders'}</button>
+            </div>`;
+        }).join('');
+      } catch (err) {
+        console.error('loadOpenBattles', err);
+        el.innerHTML = '<div class="empty-state">Couldn’t load open battles.</div>';
+      }
+    }
+
+    async function loadMyScores(judgeId, profile) {
+      const dashStats = document.getElementById('dash-stats').children;
+      dashStats[0].querySelector('h3').textContent = profile?.battles_judged ?? 0;
+      dashStats[1].querySelector('h3').textContent = profile?.verified_judge ? 'Yes' : 'No';
+      dashStats[3].querySelector('h3').textContent = profile?.created_at ? fmtDate(profile.created_at) : '—';
+
+      const awaitingEl = document.getElementById('awaiting-results');
+      const completedEl = document.getElementById('completed-battles');
+      const palateEl = document.getElementById('palate-profile');
+
+      try {
+        const { data: myScores, error } = await window.supabaseClient
+          .from('judge_scores')
+          .select('*, battles(battle_number, status, closes_at, battle_products(role, product:products(name)))')
+          .eq('judge_id', judgeId)
+          .order('created_at', { ascending: false });
+        if (error) throw error;
+
+        renderPalate(myScores || []);
+
+        const awaiting = (myScores || []).filter(s => s.battles?.status === 'open');
+        const completed = (myScores || []).filter(s => s.battles?.status === 'closed' || s.battles?.status === 'settled');
+
+        awaitingEl.innerHTML = awaiting.length
+          ? awaiting.map(s => matchupCard(s, 'awaiting')).join('')
+          : '<div class="empty-state">Nothing awaiting results.</div>';
+
+        completedEl.innerHTML = completed.length
+          ? completed.map(s => completedRow(s)).join('') + `<div class="section-footer-link"><a href="/pages/profile.html">View Full Record &rarr;</a></div>`
+          : '<div class="empty-state">No completed battles yet.</div>';
+      } catch (err) {
+        console.error('loadMyScores', err);
+        awaitingEl.innerHTML = '<div class="empty-state">Nothing awaiting results.</div>';
+        completedEl.innerHTML = '<div class="empty-state">No completed battles yet.</div>';
+        palateEl.innerHTML = '<div class="side-card-empty">Judge a few battles to unlock your palate profile.</div>';
+      }
+    }
+
+    function matchupName(s) {
+      const products = (s.battles?.battle_products || []).slice().sort((x, y) => x.role.localeCompare(y.role));
+      const [a, b] = products;
+      return (a && b) ? `${a.product.name} vs. ${b.product.name}` : battleLabel(s.battles?.battle_number);
+    }
+
+    function matchupCard(s) {
+      return `
+        <div class="awaiting-card">
+          <div>
+            <div class="verdict-id">${battleLabel(s.battles?.battle_number)} &middot; you judged ${fmtDate(s.created_at)}</div>
+            <h4>${matchupName(s)}</h4>
+          </div>
+          <div>
+            <span class="lock-pill">&#128274; Community Result Locked</span>
+            <div style="font-size:12px; color:#8b96c4; margin-top:4px;">Reveals ${fmtDate(s.battles?.closes_at)}</div>
+          </div>
+        </div>`;
+    }
+
+    function completedRow(s) {
+      const avg = avgScore(s);
+      return `
+        <div class="completed-row">
+          <div class="verdict-id">${battleLabel(s.battles?.battle_number)}</div>
+          <div class="matchup-name">${matchupName(s)}</div>
+          <div><span class="label">Your Avg Score</span>${avg != null ? avg.toFixed(1) : '—'}</div>
+          <div><span class="label">Judged</span>${fmtDate(s.created_at)}</div>
+        </div>`;
+    }
+
+    function renderPalate(myScores) {
+      const el = document.getElementById('palate-profile');
+      if (myScores.length < 3) {
+        el.innerHTML = `<div class="side-card-empty">Judge ${3 - myScores.length} more battle${myScores.length === 2 ? '' : 's'} to unlock your palate profile.</div>`;
+        return;
+      }
+      const averages = categoryAverages(myScores);
+      const strictest = averages.slice().sort((a, b) => a.average - b.average)[0];
+      el.innerHTML = averages.map(a => `
+        <div class="side-card-row"><span style="text-transform:capitalize;">${a.category}</span><strong>${a.average.toFixed(1)}</strong></div>
+      `).join('') + (strictest ? `<div class="side-card-note"><strong style="color:var(--color-acid);">${cap(strictest.category)}</strong> is where you score most critically &mdash; your average there is ${strictest.average.toFixed(1)}.</div>` : '');
+    }
+
+    function cap(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
+
+    async function loadUpcoming() {
+      const el = document.getElementById('upcoming-list');
+      try {
+        const { data: battles, error } = await window.supabaseClient
+          .from('battles')
+          .select('id, battle_number, opens_at')
+          .eq('status', 'scheduled')
+          .order('opens_at', { ascending: true })
+          .limit(2);
+        if (error) throw error;
+        el.innerHTML = (battles && battles.length)
+          ? battles.map(b => `<div class="upcoming-item"><div class="label">${battleLabel(b.battle_number)} &middot; ${fmtDate(b.opens_at)}</div><h4>Contenders TBA</h4></div>`).join('')
+          : '<div class="side-card-empty">Nothing scheduled yet.</div>';
+      } catch (err) {
+        console.error('loadUpcoming', err);
+        el.innerHTML = '<div class="side-card-empty">Nothing scheduled yet.</div>';
+      }
+    }
+  </script>
+</body>
+</html>

@@ -3,40 +3,38 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sign Up - CBX vs. The World</title>
+  <title>Create Account - CBX vs. The World</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Archivo:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../../style.css">
-  <style>
-    .auth-container { min-height: 100vh; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #0f1f3f 0%, #1a2f5f 100%); }
-    .auth-card { background: var(--color-dark-lightest); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: var(--space-2xl); width: 100%; max-width: 450px; }
-    .auth-card h1 { color: var(--color-primary); margin-bottom: var(--space-lg); text-align: center; }
-    .text-center { margin: var(--space-lg) 0; color: var(--color-text-muted); text-align: center; }
-  </style>
 </head>
 <body>
-  <div class="auth-container">
+  <div class="auth-shell">
     <div class="auth-card">
-      <h1>Create Account</h1>
+      <a href="/index.html" class="nav-logo"><span class="vs-badge">VS</span><span>CBX <span class="vs-word">VS.</span> THE WORLD</span></a>
+      <h1>Become a Judge</h1>
       <div id="error-message" class="alert alert-error hidden"></div>
-      <div id="success-message" class="alert hidden" style="background: rgba(81, 207, 102, 0.1); border-left: 4px solid #51cf66; color: #51cf66;"></div>
+      <div id="success-message" class="alert alert-success hidden"></div>
       <form id="signup-form">
         <div class="form-group">
           <label for="email">Email</label>
-          <input type="email" id="email" placeholder="you@example.com" required/>
+          <input type="email" id="email" placeholder="you@example.com" required autocomplete="email"/>
         </div>
         <div class="form-group">
           <label for="username">Username</label>
-          <input type="text" id="username" placeholder="@yourname" required/>
+          <input type="text" id="username" placeholder="yourname" required autocomplete="username"/>
         </div>
         <div class="form-group">
           <label for="password">Password</label>
-          <input type="password" id="password" placeholder="••••••••" required minlength="8"/>
+          <input type="password" id="password" placeholder="••••••••" required minlength="8" autocomplete="new-password"/>
           <small style="color: var(--color-text-muted);">Minimum 8 characters</small>
         </div>
         <div class="form-group">
-          <label for="location">Location (Optional)</label>
+          <label for="location">Location (optional)</label>
           <input type="text" id="location" placeholder="City, State"/>
         </div>
-        <button type="submit" class="btn btn-full" style="padding: var(--space-lg) var(--space-2xl);">Create Account</button>
+        <button type="submit" class="btn btn-full" id="submit-btn">Create Account</button>
       </form>
       <div class="text-center">
         Already have an account? <a href="/pages/auth/login.html">Sign in here</a>
@@ -51,27 +49,58 @@
     document.getElementById('signup-form').addEventListener('submit', async (e) => {
       e.preventDefault();
       const email = document.getElementById('email').value;
-      const username = document.getElementById('username').value;
+      const username = document.getElementById('username').value.replace(/^@/, '').trim();
       const password = document.getElementById('password').value;
       const location = document.getElementById('location').value || null;
+      const errorEl = document.getElementById('error-message');
+      const successEl = document.getElementById('success-message');
+      const submitBtn = document.getElementById('submit-btn');
+      errorEl.classList.add('hidden');
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Creating Account…';
+
       try {
         const { data: authData, error: authError } = await window.supabaseClient.auth.signUp({ email, password });
         if (authError) {
-          document.getElementById('error-message').textContent = authError.message;
-          document.getElementById('error-message').classList.remove('hidden');
+          errorEl.textContent = authError.message;
+          errorEl.classList.remove('hidden');
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Create Account';
           return;
         }
-        const { error: profileError } = await window.supabaseClient.from('judge_profiles').insert([{ user_id: authData.user.id, username, location, verified_judge: false, battles_judged: 0 }]);
+
+        const profileDraft = { user_id: authData.user.id, username, location, verified_judge: false, battles_judged: 0 };
+
+        if (!authData.session) {
+          // Email confirmation is required — there's no authenticated session yet, so
+          // the judge_profiles insert would fail RLS. Stash the draft and finish it
+          // on first sign-in instead (see H2H.ensureJudgeProfile in app.js).
+          localStorage.setItem('h2h-pending-profile', JSON.stringify(profileDraft));
+          successEl.textContent = 'Check your email to confirm your account, then sign in to finish setting up your judge profile.';
+          successEl.classList.remove('hidden');
+          const redirect = new URLSearchParams(window.location.search).get('redirect');
+          setTimeout(() => { window.location.href = '/pages/auth/login.html' + (redirect ? '?redirect=' + encodeURIComponent(redirect) : ''); }, 2500);
+          return;
+        }
+
+        const { error: profileError } = await window.supabaseClient.from('judge_profiles').insert([profileDraft]);
         if (profileError) {
-          document.getElementById('error-message').textContent = profileError.message;
-          document.getElementById('error-message').classList.remove('hidden');
+          errorEl.textContent = profileError.message;
+          errorEl.classList.remove('hidden');
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Create Account';
           return;
         }
-        document.getElementById('success-message').textContent = 'Account created! Redirecting...';
-        document.getElementById('success-message').classList.remove('hidden');
-        setTimeout(() => { window.location.href = '/index.html'; }, 2000);
+        successEl.textContent = 'Account created! Redirecting…';
+        successEl.classList.remove('hidden');
+        const redirect = new URLSearchParams(window.location.search).get('redirect');
+        setTimeout(() => { window.location.href = redirect || '/pages/dashboard.html'; }, 1500);
       } catch (err) {
         console.error(err);
+        errorEl.textContent = 'Something went wrong. Please try again.';
+        errorEl.classList.remove('hidden');
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Create Account';
       }
     });
   </script>

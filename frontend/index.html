@@ -4,125 +4,381 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>CBX vs. The World</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Archivo:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
-  <style>
-    .hero { padding: 64px 16px; text-align: center; background: linear-gradient(135deg, #0f1f3f 0%, #1a2f5f 100%); }
-    .hero h1 { font-size: 3rem; color: white; margin-bottom: 16px; }
-    .hero .highlight { color: #c7ff00; }
-    .hero p { font-size: 20px; color: #8899bb; max-width: 600px; margin: 0 auto 48px; }
-    .hero-buttons { display: flex; gap: 24px; justify-content: center; flex-wrap: wrap; }
-    .stats { padding: 48px 16px; background: #1a2f5f; border-top: 2px solid #c7ff00; border-bottom: 2px solid #c7ff00; }
-    .stats-grid { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; text-align: center; }
-    .stat-item h3 { font-size: 32px; color: #c7ff00; margin-bottom: 8px; }
-    .stat-item p { color: #8899bb; text-transform: uppercase; font-size: 12px; margin: 0; }
-    .battle-section { padding: 48px 16px; }
-    .battle-card { max-width: 1000px; margin: 0 auto; background: #2a3f6f; border: 2px solid #3a4f7f; border-radius: 16px; padding: 48px; }
-    .battle-contenders { display: grid; grid-template-columns: 1fr auto 1fr; gap: 24px; align-items: center; margin-bottom: 48px; }
-    .contender { background: #0f1f3f; border: 1px solid #3a4f7f; border-radius: 8px; padding: 24px; text-align: center; }
-    .contender img { width: 150px; height: 150px; object-fit: cover; border-radius: 8px; margin-bottom: 16px; }
-    .contender h3 { color: #c7ff00; margin-bottom: 8px; }
-    .vs { font-size: 32px; font-weight: 900; color: #c7ff00; }
-    .upcoming { max-width: 1200px; margin: 0 auto; padding: 48px 16px; }
-    .upcoming-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
-    .upcoming-card { background: #2a3f6f; border: 1px solid #3a4f7f; border-radius: 16px; padding: 24px; cursor: pointer; }
-    @media (max-width: 768px) { .stats-grid { grid-template-columns: repeat(2, 1fr); } .battle-contenders { grid-template-columns: 1fr; } .upcoming-grid { grid-template-columns: 1fr; } .hero h1 { font-size: 2rem; } }
-  </style>
 </head>
 <body>
-  <nav>
-    <div class="nav-container">
-      <a href="/index.html" class="nav-logo">CBX VS. WORLD</a>
+  <header class="site-header">
+    <div class="container">
+      <a href="/index.html" class="nav-logo">
+        <span class="vs-badge">VS</span>
+        <span>CBX <span class="vs-word">VS.</span> THE WORLD</span>
+      </a>
+      <ul class="nav-links">
+        <li><a href="/index.html" class="active">Home</a></li>
+        <li><a href="#fight-card">Battles</a></li>
+        <li><a href="#verdicts">Results</a></li>
+        <li><a href="#panel">Judges</a></li>
+        <li><a href="#how-it-works">Rules</a></li>
+      </ul>
       <div id="nav-auth"></div>
     </div>
-  </nav>
+  </header>
 
   <section class="hero">
-    <h1>THE BEST FLOWER<br/>DOESN'T GET <span class="highlight">CROWNED.</span><br/>IT GETS <span class="highlight">JUDGED.</span></h1>
-    <p>Head-to-head battles, scored round by round by the people who actually smoke it.</p>
+    <div class="eyebrow" id="hero-eyebrow">Loading battles&hellip;</div>
+    <h1>THE BEST FLOWER DOESN'T GET <span class="highlight">CROWNED.</span> IT GETS <span class="highlight">JUDGED.</span></h1>
+    <p>No panel of ten insiders in a back room. Head-to-head battles, scored round by round by the people who actually smoke it. Six rounds, one verdict, sealed until judging closes.</p>
     <div class="hero-buttons">
-      <button class="btn" onclick="goToJudging()">JUDGE THE LIVE BATTLE</button>
-      <button class="btn btn-secondary">SEE THE FIGHT CARD</button>
+      <button class="btn" onclick="goToJudging()">Judge the Live Battle</button>
+      <a href="#fight-card" class="btn btn-secondary">See the Fight Card</a>
+    </div>
+    <div class="stats-bar">
+      <div class="stats-grid">
+        <div class="stat-item"><h3 id="stat-judges">&mdash;</h3><p>Registered Judges</p></div>
+        <div class="stat-item"><h3 id="stat-battles">&mdash;</h3><p>Battles Settled</p></div>
+        <div class="stat-item"><h3 id="stat-rounds">&mdash;</h3><p>Rounds Scored</p></div>
+        <div class="stat-item"><h3 id="stat-days">&mdash;</h3><p id="stat-days-label">Days to Judge</p></div>
+      </div>
     </div>
   </section>
 
-  <section class="stats">
-    <div class="stats-grid">
-      <div class="stat-item"><h3 id="stat-judges">0</h3><p>Judges</p></div>
-      <div class="stat-item"><h3 id="stat-battles">0</h3><p>Battles Settled</p></div>
-      <div class="stat-item"><h3 id="stat-rounds">0</h3><p>Rounds Scored</p></div>
-      <div class="stat-item"><h3 id="stat-days">12</h3><p>Days Left</p></div>
+  <section class="section main-event">
+    <div class="container">
+      <div id="main-event" class="empty-state">
+        <div class="eyebrow">Loading</div>
+        <p>Loading the live battle&hellip;</p>
+      </div>
     </div>
   </section>
 
-  <section class="battle-section">
-    <div class="battle-card" id="main-battle">
-      <div class="spinner" style="margin: 50px auto; width: 50px; height: 50px;"></div>
-      <p style="text-align: center; color: #8899bb;">Loading battle...</p>
+  <section class="section section-dark" id="fight-card">
+    <div class="container">
+      <div class="section-head">
+        <div class="section-label"><span>The Fight Card</span></div>
+        <p class="text-muted">Next battles. Claim a judging slot before it fills.</p>
+      </div>
+      <div class="fight-card-grid" id="fight-card-grid">
+        <div class="empty-state">Loading upcoming battles&hellip;</div>
+      </div>
     </div>
   </section>
 
-  <section class="upcoming">
-    <h2 style="margin-bottom: 24px;">NEXT BATTLES</h2>
-    <div class="upcoming-grid" id="upcoming-battles"></div>
+  <section class="section section-light" id="verdicts">
+    <div class="container">
+      <div class="section-head">
+        <div class="section-label"><span>Settled Verdicts</span></div>
+        <p class="text-muted">Sealed during judging. Public forever after.</p>
+      </div>
+      <div class="verdicts-table" id="verdicts-table">
+        <div class="empty-state">Loading settled verdicts&hellip;</div>
+      </div>
+    </div>
   </section>
 
-  <footer style="text-align: center; padding: 48px 16px; border-top: 1px solid #3a4f7f; color: #8899bb;">
-    <p>&copy; 2026 CBX vs. The World.</p>
+  <section class="section section-light" id="panel">
+    <div class="container two-col">
+      <div>
+        <div class="section-head">
+          <div class="section-label"><span>The Panel</span></div>
+        </div>
+        <table class="panel-table">
+          <thead>
+            <tr><th>#</th><th>Judge</th><th class="num-col">Battles</th><th class="num-col">Verified</th></tr>
+          </thead>
+          <tbody id="panel-table-body">
+            <tr><td colspan="4" class="empty-state">Loading panel&hellip;</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div id="how-it-works">
+        <div class="section-head">
+          <div class="section-label"><span>Four Steps</span></div>
+        </div>
+        <ol class="steps-list">
+          <li>
+            <span class="step-num">01</span>
+            <div class="step-body"><h4>Get both</h4><p>Buy both contenders in your market. Keep the packaging.</p></div>
+          </li>
+          <li>
+            <span class="step-num">02</span>
+            <div class="step-body"><h4>Judge six rounds</h4><p>Appearance, aroma, cure, flavor, smoke, effects &mdash; each scored independently.</p></div>
+          </li>
+          <li>
+            <span class="step-num">03</span>
+            <div class="step-body"><h4>Make the call</h4><p>If you could keep only one, which is it? Locked on submission.</p></div>
+          </li>
+          <li>
+            <span class="step-num">04</span>
+            <div class="step-body"><h4>Build your record</h4><p>Your calls, your accuracy, your standing on the panel.</p></div>
+          </li>
+        </ol>
+        <button class="btn btn-full" onclick="goToJudging()">Try a Practice Round</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="section final-cta">
+    <div class="container">
+      <div class="eyebrow" id="cta-eyebrow">Judging is live</div>
+      <h2>Put Your Palate<br>On the Record</h2>
+      <p>Free to enter. No account needed to start scoring &mdash; you only sign in when you submit.</p>
+      <button class="btn" onclick="goToJudging()">Judge This Battle</button>
+    </div>
+  </section>
+
+  <footer class="site-footer">
+    <div class="container">
+      <a href="/index.html" class="nav-logo">CBX <span class="vs-word">VS.</span> THE WORLD</a>
+      <ul class="footer-links">
+        <li><a href="#how-it-works">Rules</a></li>
+        <li><a href="#verdicts">Results Archive</a></li>
+        <li><a href="/pages/auth/signup.html">Become a Judge</a></li>
+        <li>21+ Only</li>
+      </ul>
+    </div>
   </footer>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js"></script>
   <script src="app.js"></script>
   <script>
+    const { productImage, fmtDate, daysUntil } = window.H2H;
+
     async function pageInit() {
-      await loadStats();
-      await loadMainBattle();
-      await loadUpcomingBattles();
+      await Promise.all([
+        loadStats(),
+        loadMainEvent(),
+        loadFightCard(),
+        loadVerdicts(),
+        loadPanel(),
+      ]);
     }
 
     async function loadStats() {
       try {
-        const { count: judges } = await window.supabaseClient.from('judge_profiles').select('*', { count: 'exact' });
-        const { count: battles } = await window.supabaseClient.from('battle_results').select('*', { count: 'exact' });
-        const { count: scores } = await window.supabaseClient.from('judge_scores').select('*', { count: 'exact' });
-        document.getElementById('stat-judges').textContent = judges || 0;
-        document.getElementById('stat-battles').textContent = battles || 0;
-        document.getElementById('stat-rounds').textContent = scores || 0;
-      } catch (err) { console.error(err); }
+        const [{ count: judges }, { count: battles }, { count: rounds }] = await Promise.all([
+          window.supabaseClient.from('judge_profiles').select('*', { count: 'exact', head: true }),
+          window.supabaseClient.from('battle_results').select('*', { count: 'exact', head: true }),
+          window.supabaseClient.from('judge_scores').select('*', { count: 'exact', head: true }),
+        ]);
+        document.getElementById('stat-judges').textContent = judges ?? 0;
+        document.getElementById('stat-battles').textContent = battles ?? 0;
+        document.getElementById('stat-rounds').textContent = rounds ?? 0;
+      } catch (err) {
+        console.error('loadStats', err);
+      }
     }
 
-    async function loadMainBattle() {
+    async function fetchOpenBattle() {
+      const { data, error } = await window.supabaseClient
+        .from('battles')
+        .select('id, battle_number, status, closes_at, judging_category, battle_products(role, product:products(id, name, cultivar, format, image_url))')
+        .eq('status', 'open')
+        .order('opens_at', { ascending: true })
+        .limit(1)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    }
+
+    async function loadMainEvent() {
+      const el = document.getElementById('main-event');
       try {
-        const { data: battle } = await window.supabaseClient.from('battles').select('id, battle_number, status, battle_products!inner(role, product:products(id, name, cultivar, image_url))').eq('status', 'open').limit(1).single();
-        if (!battle) {
-          document.getElementById('main-battle').innerHTML = '<p style="text-align: center; color: #8899bb; padding: 48px;">No active battles.</p>';
+        const battle = await fetchOpenBattle();
+        const days = battle ? daysUntil(battle.closes_at) : null;
+        document.getElementById('hero-eyebrow').textContent = battle
+          ? `Smoke-Off #${String(battle.battle_number).padStart(3, '0')} is Live`
+          : 'No battle is live right now';
+        document.getElementById('cta-eyebrow').textContent = battle && days !== null
+          ? `${days} day${days === 1 ? '' : 's'} left on #${String(battle.battle_number).padStart(3, '0')}`
+          : 'Check back soon';
+        document.getElementById('stat-days').textContent = days ?? '—';
+        document.getElementById('stat-days-label').textContent = battle
+          ? `Days to Judge #${String(battle.battle_number).padStart(3, '0')}`
+          : 'Days to Next Battle';
+
+        const products = (battle?.battle_products || []).slice().sort((a, b) => a.role.localeCompare(b.role));
+        if (!battle || products.length < 2) {
+          el.innerHTML = `
+            <div class="section-label"><span>Main Event</span></div>
+            <div class="empty-state">
+              <p>${battle ? 'This battle hasn’t been paired with contenders yet.' : 'No battle is open for judging right now. Check the fight card below.'}</p>
+            </div>`;
           return;
         }
-        const [a, b] = battle.battle_products;
-        document.getElementById('main-battle').innerHTML = `<h2 style="margin-bottom: 24px;">Smoke-off #${String(battle.battle_number).padStart(3, '0')}</h2><div class="battle-contenders"><div class="contender"><img src="${a.product.image_url}" alt="${a.product.name}"><h3>${a.product.name}</h3><p style="color: #8899bb; font-size: 12px; margin: 0;">${a.product.cultivar || 'Unknown'}</p></div><div class="vs">VS</div><div class="contender"><img src="${b.product.image_url}" alt="${b.product.name}"><h3>${b.product.name}</h3><p style="color: #8899bb; font-size: 12px; margin: 0;">${b.product.cultivar || 'Unknown'}</p></div></div><button class="btn" style="width: 100%; padding: 24px;" onclick="goToJudging('${battle.id}')">JUDGE THIS BATTLE</button>`;
-      } catch (err) { console.error(err); }
+
+        const [a, b] = products;
+        el.classList.remove('empty-state');
+        el.innerHTML = `
+          <div class="main-event-header">
+            <div>
+              <div class="section-label"><span>Main Event &middot; Live</span></div>
+              <h2 class="main-event-title">${a.product.name} vs. ${b.product.name}</h2>
+            </div>
+            <a class="main-event-link" href="/pages/battle.html?id=${battle.id}">Full Battle Page &rarr;</a>
+          </div>
+          <div class="battle-card">
+            <div class="battle-contenders">
+              <div class="contender">
+                ${contenderImg(a.product)}
+                <div>
+                  <div class="contender-label">Contender A &middot; The Anchor</div>
+                  <div class="contender-name">${a.product.name}</div>
+                  <div class="contender-meta">${[a.product.cultivar, a.product.format].filter(Boolean).join(' &middot; ')}</div>
+                </div>
+              </div>
+              <div class="contender">
+                ${contenderImg(b.product)}
+                <div>
+                  <div class="contender-label">Contender B &middot; The Challenger</div>
+                  <div class="contender-name">${b.product.name}</div>
+                  <div class="contender-meta">${[b.product.cultivar, b.product.format].filter(Boolean).join(' &middot; ')}</div>
+                </div>
+              </div>
+            </div>
+            <div class="battle-card-footer">
+              <div class="battle-card-meta">
+                <span class="status-pill sealed">Results Sealed</span>
+                <span>${battle.closes_at ? `Closes ${fmtDate(battle.closes_at)}` : 'Closing date TBD'}</span>
+              </div>
+              <button class="btn" onclick="goToJudging('${battle.id}')">Enter as Judge</button>
+            </div>
+          </div>`;
+      } catch (err) {
+        console.error('loadMainEvent', err);
+        el.innerHTML = `<div class="section-label"><span>Main Event</span></div><div class="empty-state"><p>Couldn’t load the live battle. Try refreshing.</p></div>`;
+      }
     }
 
-    async function loadUpcomingBattles() {
+    function contenderImg(product) {
+      const src = productImage(product);
+      return src
+        ? `<img src="${src}" alt="${product.name}" onerror="this.replaceWith(Object.assign(document.createElement('div'), {className: 'img-placeholder'}))">`
+        : `<div class="img-placeholder"></div>`;
+    }
+
+    async function loadFightCard() {
+      const grid = document.getElementById('fight-card-grid');
       try {
-        const { data: battles } = await window.supabaseClient.from('battles').select('id, battle_number, battle_products!inner(role, product:products(name))').eq('status', 'scheduled').order('opens_at', { ascending: true }).limit(3);
+        const { data: battles, error } = await window.supabaseClient
+          .from('battles')
+          .select('id, battle_number, opens_at, battle_products(role, product:products(name))')
+          .eq('status', 'scheduled')
+          .order('opens_at', { ascending: true })
+          .limit(3);
+        if (error) throw error;
+
         if (!battles || battles.length === 0) {
-          document.getElementById('upcoming-battles').innerHTML = '<p style="color: #8899bb;">No upcoming battles.</p>';
+          grid.innerHTML = '<div class="empty-state">No upcoming battles are scheduled yet.</div>';
           return;
         }
-        document.getElementById('upcoming-battles').innerHTML = battles.map(b => {
-          const [a, c] = b.battle_products;
-          return `<div class="upcoming-card"><h3 style="color: #c7ff00;">Smoke-off #${String(b.battle_number).padStart(3, '0')}</h3><p><strong>${a.product.name}</strong> vs <strong>${c.product.name}</strong></p></div>`;
+
+        grid.innerHTML = battles.map(b => {
+          const products = (b.battle_products || []).slice().sort((x, y) => x.role.localeCompare(y.role));
+          const [a, c] = products;
+          const matchup = (a && c)
+            ? `<div class="matchup"><span>${a.product.name}</span><span class="vs-sep">VS</span><span>${c.product.name}</span></div>`
+            : `<p class="desc">Contenders to be announced.</p>`;
+          return `
+            <div class="fight-card-item">
+              <div class="fight-card-item-top">
+                <span class="opens-badge">Opens<strong>${fmtDate(b.opens_at)}</strong></span>
+                <span class="battle-number">#${String(b.battle_number).padStart(3, '0')}</span>
+              </div>
+              ${matchup}
+              <div class="fight-card-item-footer">
+                <span>Judging opens ${fmtDate(b.opens_at)}</span>
+                <a href="/pages/battle.html?id=${b.id}">Notify Me &rarr;</a>
+              </div>
+            </div>`;
         }).join('');
-      } catch (err) { console.error(err); }
+      } catch (err) {
+        console.error('loadFightCard', err);
+        grid.innerHTML = '<div class="empty-state">Couldn’t load upcoming battles.</div>';
+      }
+    }
+
+    async function loadVerdicts() {
+      const table = document.getElementById('verdicts-table');
+      try {
+        const { data: results, error } = await window.supabaseClient
+          .from('battle_results')
+          .select('id, battle_id, created_at, battles(battle_number), winner:products!battle_results_winner_id_fkey(name), loser:products!battle_results_loser_id_fkey(name)')
+          .order('created_at', { ascending: false })
+          .limit(5);
+        if (error) throw error;
+
+        if (!results || results.length === 0) {
+          table.innerHTML = '<div class="empty-state">No battles have settled yet. Smoke-off #001 will be the first.</div>';
+          return;
+        }
+
+        const withCounts = await Promise.all(results.map(async r => {
+          const { count } = await window.supabaseClient.from('judge_scores').select('*', { count: 'exact', head: true }).eq('battle_id', r.battle_id);
+          return { ...r, judgeCount: count ?? 0 };
+        }));
+
+        table.innerHTML = withCounts.map(r => `
+          <div class="verdict-row">
+            <div class="verdict-id">${r.battles ? `Smoke-Off #${String(r.battles.battle_number).padStart(3, '0')}` : ''}</div>
+            <div class="verdict-matchup">${r.winner?.name || 'Winner'} vs. ${r.loser?.name || 'Contender'}</div>
+            <div class="verdict-winner">
+              <div class="verdict-winner-name">${r.winner?.name || 'Winner TBD'}</div>
+            </div>
+            <div class="verdict-judges">${r.judgeCount} judge${r.judgeCount === 1 ? '' : 's'} scored</div>
+            <div class="verdict-judges">${fmtDate(r.created_at)}</div>
+          </div>`).join('') + `<div class="section-footer-link"><a href="#verdicts">All Settled Battles &rarr;</a></div>`;
+      } catch (err) {
+        console.error('loadVerdicts', err);
+        table.innerHTML = '<div class="empty-state">No battles have settled yet. Smoke-off #001 will be the first.</div>';
+      }
+    }
+
+    async function loadPanel() {
+      const body = document.getElementById('panel-table-body');
+      try {
+        const { data: judges, error } = await window.supabaseClient
+          .from('judge_profiles')
+          .select('*')
+          .limit(5);
+        if (error) throw error;
+
+        if (!judges || judges.length === 0) {
+          body.innerHTML = '<tr><td colspan="4" class="empty-state">No judges yet &mdash; be the first on the panel.</td></tr>';
+          return;
+        }
+
+        body.innerHTML = judges.map((j, i) => `
+          <tr>
+            <td>${String(i + 1).padStart(2, '0')}</td>
+            <td><a href="/pages/profile.html?username=${encodeURIComponent(j.username)}" class="judge-handle">@${j.username || 'judge'}</a>${j.location ? `<span class="judge-loc">${j.location}</span>` : ''}</td>
+            <td class="num-col">${j.battles_judged ?? '—'}</td>
+            <td class="num-col win-pct">${j.verified_judge ? '✓' : '—'}</td>
+          </tr>`).join('');
+      } catch (err) {
+        console.error('loadPanel', err);
+        body.innerHTML = '<tr><td colspan="4" class="empty-state">No judges yet &mdash; be the first on the panel.</td></tr>';
+      }
     }
 
     async function goToJudging(battleId) {
+      let target = '/pages/judging.html';
+      if (!battleId) {
+        try {
+          const battle = await fetchOpenBattle();
+          if (battle) battleId = battle.id;
+        } catch (err) { console.error(err); }
+      }
+      if (battleId) target += '?id=' + battleId;
+
       const loggedIn = await window.supabaseHelpers.isLoggedIn();
       if (!loggedIn) {
-        window.location.href = '/pages/auth/login.html?redirect=/pages/judging.html?id=' + battleId;
+        window.location.href = '/pages/auth/login.html?redirect=' + encodeURIComponent(target);
       } else {
-        window.location.href = '/pages/judging.html?id=' + battleId;
+        window.location.href = target;
       }
     }
 
@@ -130,6 +386,3 @@
   </script>
 </body>
 </html>
-
-
-

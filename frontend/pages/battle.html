@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Battle - CBX vs. The World</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Archivo:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="container">
+      <a href="/index.html" class="nav-logo">
+        <span class="vs-badge">VS</span>
+        <span>CBX <span class="vs-word">VS.</span> THE WORLD</span>
+      </a>
+      <ul class="nav-links">
+        <li><a href="/index.html">Home</a></li>
+        <li><a href="/index.html#fight-card">Battles</a></li>
+        <li><a href="/index.html#verdicts">Results</a></li>
+        <li><a href="/index.html#panel">Judges</a></li>
+        <li><a href="#rules">Rules</a></li>
+      </ul>
+      <div id="nav-auth"></div>
+    </div>
+  </header>
+
+  <main id="battle-root">
+    <div class="empty-state">Loading battle&hellip;</div>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../config.js"></script>
+  <script src="../app.js"></script>
+  <script>
+    const { productImage, fmtDate, daysUntil, battleLabel } = window.H2H;
+    let battle;
+
+    async function pageInit() {
+      const id = new URLSearchParams(window.location.search).get('id');
+      try {
+        battle = await fetchBattle(id);
+        if (!battle) {
+          document.getElementById('battle-root').innerHTML = `<div class="section"><div class="empty-state"><p>That battle couldn't be found.</p><p><a href="/index.html">Back home</a></p></div></div>`;
+          return;
+        }
+        const [{ count: judgeCount }] = await Promise.all([
+          window.supabaseClient.from('judge_scores').select('*', { count: 'exact', head: true }).eq('battle_id', battle.id),
+        ]);
+        render(battle, judgeCount ?? 0);
+      } catch (err) {
+        console.error('battle pageInit', err);
+        document.getElementById('battle-root').innerHTML = `<div class="section"><div class="empty-state"><p>Couldn't load this battle. Try refreshing.</p></div></div>`;
+      }
+    }
+
+    async function fetchBattle(id) {
+      let query = window.supabaseClient
+        .from('battles')
+        .select('id, battle_number, status, opens_at, closes_at, judging_category, battle_products(role, product:products(*))');
+      query = id ? query.eq('id', id) : query.eq('status', 'open').order('opens_at', { ascending: true }).limit(1);
+      const { data, error } = await query.maybeSingle();
+      if (error) throw error;
+      return data;
+    }
+
+    function contenderImg(product) {
+      const src = productImage(product);
+      return src
+        ? `<img src="${src}" alt="${product.name}" onerror="this.replaceWith(Object.assign(document.createElement('div'), {className: 'img-placeholder'}))">`
+        : `<div class="img-placeholder"></div>`;
+    }
+
+    function tapeRow(label, a, b) {
+      return `<div class="tale-tape-row"><div>${a ?? '—'}</div><div class="metric-col">${label}</div><div class="b-col">${b ?? '—'}</div></div>`;
+    }
+
+    function render(battle, judgeCount) {
+      const products = (battle.battle_products || []).slice().sort((x, y) => x.role.localeCompare(y.role));
+      const [a, b] = products.map(p => p.product);
+      const days = daysUntil(battle.closes_at);
+      const label = battleLabel(battle.battle_number);
+      document.title = `${label} - CBX vs. The World`;
+
+      const root = document.getElementById('battle-root');
+
+      if (!a || !b) {
+        root.innerHTML = `
+          <section class="battle-hero">
+            <div class="eyebrow">${label}</div>
+            <h1>Contenders <span class="highlight">TBA</span></h1>
+            <p style="color:var(--color-text-muted); max-width:520px; margin: 0 auto;">This battle hasn't been paired with contenders yet. Check back soon.</p>
+          </section>`;
+        return;
+      }
+
+      root.innerHTML = `
+        <section class="battle-hero">
+          <div class="eyebrow">${label}</div>
+          <h1>Two Premium Flowers Enter.<br><span class="highlight">One Wins.</span></h1>
+        </section>
+
+        <div class="contenders-face-off">
+          <div class="contender-photo-card">
+            <div class="photo-top"><span class="contender-label" style="margin:0;">Contender A &middot; The Anchor</span><span>${(a.format || '').split('/')[0] || ''}</span></div>
+            <div class="photo-frame">${contenderImg(a)}</div>
+            <div class="photo-bottom">
+              <div class="contender-meta">${a.grower_name || ''}</div>
+              <div class="contender-name">${a.name}</div>
+              <div class="contender-meta">${[a.format].filter(Boolean).join(' &middot; ')}</div>
+            </div>
+          </div>
+          <div class="vs-divider">
+            <span class="vs-word-big">VS</span>
+            <span class="vs-date">${fmtDate(battle.closes_at)}</span>
+          </div>
+          <div class="contender-photo-card">
+            <div class="photo-top"><span class="contender-label" style="margin:0;">Contender B &middot; The Challenger</span><span>${(b.format || '').split('/')[0] || ''}</span></div>
+            <div class="photo-frame">${contenderImg(b)}</div>
+            <div class="photo-bottom">
+              <div class="contender-meta">${b.grower_name || ''}</div>
+              <div class="contender-name">${b.name}</div>
+              <div class="contender-meta">${[b.format].filter(Boolean).join(' &middot; ')}</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="battle-meta-bar">
+          <div><h3>${judgeCount}</h3><p>Judges Entered</p></div>
+          <div><h3>${days ?? '—'}</h3><p>Days to Judge</p></div>
+          <div class="sealed-note">
+            <p><span class="status-pill sealed">Results Hidden Until Judging Closes</span></p>
+            <p style="color:var(--color-text-muted); font-size:13px;">No live percentages. The reveal is part of the competition.</p>
+          </div>
+        </div>
+
+        <div style="text-align:center; margin-bottom: var(--space-3xl);">
+          <div class="hero-buttons" style="margin-bottom: var(--space-md);">
+            <button class="btn" onclick="goToJudging('${battle.id}')">Judge This Battle</button>
+            <a href="#rules" class="btn btn-secondary">How Judging Works</a>
+          </div>
+          <p style="color:var(--color-text-muted); font-size:14px;">Get both contenders. Try them side-by-side. Score each independently. Decide which deserves to advance.</p>
+        </div>
+
+        <section class="section section-light">
+          <div class="container">
+            <div class="section-head"><div class="section-label"><span>How It Works</span></div></div>
+            <ol class="steps-list" style="display:grid; grid-template-columns:repeat(4,1fr); gap: var(--space-lg);">
+              <li><div class="step-body"><span class="step-num" style="font-size:1.75rem;">01</span><h4 style="font-family:var(--font-display); text-transform:uppercase; font-size:1rem; margin-top:var(--space-sm);">Get Both</h4><p>Pick up both eligible products in your market. Keep the packaging &mdash; it counts later.</p></div></li>
+              <li><div class="step-body"><span class="step-num" style="font-size:1.75rem;">02</span><h4 style="font-family:var(--font-display); text-transform:uppercase; font-size:1rem; margin-top:var(--space-sm);">Judge</h4><p>Six rounds, side-by-side. Each contender is scored independently before any comparison.</p></div></li>
+              <li><div class="step-body"><span class="step-num" style="font-size:1.75rem;">03</span><h4 style="font-family:var(--font-display); text-transform:uppercase; font-size:1rem; margin-top:var(--space-sm);">Pick the Winner</h4><p>One call, locked for good: if you could keep only one, which would it be?</p></div></li>
+              <li><div class="step-body"><span class="step-num" style="font-size:1.75rem;">04</span><h4 style="font-family:var(--font-display); text-transform:uppercase; font-size:1rem; margin-top:var(--space-sm);">Build Your Record</h4><p>Every battle you judge becomes part of a permanent judging record.</p></div></li>
+            </ol>
+          </div>
+        </section>
+
+        <section class="section section-light" style="padding-top:0;">
+          <div class="container">
+            <div class="section-head"><div class="section-label"><span>Tale of the Tape</span></div></div>
+            <div class="tale-tape">
+              <div class="tale-tape-head"><div style="color:var(--color-acid);">${a.name}</div><div class="metric-col">Metric</div><div class="b-col" style="color:var(--color-white);">${b.name}</div></div>
+              ${tapeRow('Cultivar', a.cultivar, b.cultivar)}
+              ${tapeRow('Lineage', a.lineage, b.lineage)}
+              ${tapeRow('Package Date', fmtDate(a.package_date), fmtDate(b.package_date))}
+              ${tapeRow('Format', a.format, b.format)}
+              ${tapeRow('Total Cannabinoids', a.cannabinoids_thc != null ? `${a.cannabinoids_thc}%` : null, b.cannabinoids_thc != null ? `${b.cannabinoids_thc}%` : null)}
+            </div>
+            <div class="tale-tape-foot">Lab figures are reference only. Judges score what is in front of them.</div>
+          </div>
+        </section>
+
+        <section class="section section-light" id="rules" style="padding-top:0;">
+          <div class="container rules-grid">
+            <div>
+              <h3 style="font-size:1.5rem; margin-bottom:var(--space-lg);">The Rules Are Short</h3>
+              <ul class="rules-list">
+                <li>You must have experienced <strong>both</strong> contenders before submitting an official head-to-head judgment.</li>
+                <li>Each product is scored independently, round by round, before the winner is chosen.</li>
+                <li>Community results stay sealed until judging closes. One vote per judge, locked on submission.</li>
+              </ul>
+            </div>
+            <div>
+              <div class="verify-card">
+                <div class="verify-badge">Community</div>
+                <p>Completed the full judging process for both contenders. Your scores count toward the community result.</p>
+              </div>
+              <div class="verify-card verified">
+                <div class="verify-badge">Verified Judge &check;</div>
+                <p>Added batch and package evidence for both contenders. Same weight in the result &mdash; verified scores just carry batch data with them.</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="section final-cta">
+          <div class="container">
+            <h2>Enter the Smoke-Off</h2>
+            <p>Judging closes ${fmtDate(battle.closes_at)}. No account needed to start &mdash; you only sign in when you submit.</p>
+            <button class="btn" onclick="goToJudging('${battle.id}')">Judge This Battle</button>
+          </div>
+        </section>`;
+    }
+
+    async function goToJudging(battleId) {
+      const target = '/pages/judging.html?id=' + battleId;
+      const loggedIn = await window.supabaseHelpers.isLoggedIn();
+      window.location.href = loggedIn ? target : '/pages/auth/login.html?redirect=' + encodeURIComponent(target);
+    }
+
+    window.goToJudging = goToJudging;
+  </script>
+</body>
+</html>

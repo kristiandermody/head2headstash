@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Judging Record - CBX vs. The World</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Archivo:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+  <header class="app-header">
+    <div class="container">
+      <a href="/index.html" class="nav-logo"><span class="vs-badge">VS</span><span>CBX <span class="vs-word">VS.</span> THE WORLD</span></a>
+      <ul class="app-nav-links">
+        <li><a href="/pages/dashboard.html">Dashboard</a></li>
+        <li><a href="/pages/profile.html" class="active">My Record</a></li>
+        <li><a href="/index.html#fight-card">Battles</a></li>
+        <li><a href="/index.html#verdicts">Archive</a></li>
+      </ul>
+      <div id="app-nav-auth"></div>
+    </div>
+  </header>
+
+  <section class="profile-hero" id="profile-hero">
+    <div class="container"><div class="empty-state">Loading&hellip;</div></div>
+  </section>
+
+  <section class="profile-stats" id="profile-stats"></section>
+
+  <section class="section section-light" style="padding-top: var(--space-xl);">
+    <div class="container dash-grid">
+      <div>
+        <div class="section-head"><div class="section-label"><span>Battle History</span></div></div>
+        <div id="battle-history"><div class="empty-state">Loading&hellip;</div></div>
+      </div>
+      <div>
+        <div class="card" style="background: #fff; border-color: #e5e7f0; margin-bottom: var(--space-lg);">
+          <div class="section-head" style="margin-bottom: var(--space-md);"><div class="section-label"><span>Category Averages</span></div></div>
+          <div id="category-averages"><div class="empty-state">Loading&hellip;</div></div>
+        </div>
+        <div class="side-card">
+          <div class="section-label" style="margin-bottom: var(--space-sm);"><span>What This Is</span></div>
+          <p style="font-size: 13px; color: var(--color-text-muted);">Category averages are your own scoring pattern across every battle you've judged &mdash; not a ranking against other judges. There's no right answer in a smoke-off, only a verdict.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../config.js"></script>
+  <script src="../app.js"></script>
+  <script>
+    const { productImage, fmtDate, fmtDateLong, initials, battleLabel, avgScore, categoryAverages, SCORE_CATEGORIES } = window.H2H;
+
+    async function pageInit() {
+      await window.supabaseHelpers.requireAuth();
+      window.H2H.renderAppHeaderAuth('app-nav-auth');
+
+      const params = new URLSearchParams(window.location.search);
+      const requestedUsername = params.get('username');
+      const currentUser = await window.supabaseHelpers.getCurrentUser();
+
+      let profile;
+      try {
+        if (requestedUsername) {
+          const { data, error } = await window.supabaseClient.from('judge_profiles').select('*').eq('username', requestedUsername).maybeSingle();
+          if (error) throw error;
+          profile = data;
+        } else {
+          profile = await window.supabaseHelpers.getCurrentJudgeProfile();
+        }
+      } catch (err) {
+        console.error('load profile', err);
+      }
+
+      if (!profile) {
+        document.getElementById('profile-hero').querySelector('.container').innerHTML = `<div class="empty-state"><p>This judge's record isn't available.</p></div>`;
+        document.getElementById('profile-stats').remove();
+        return;
+      }
+
+      document.title = `@${profile.username} - CBX vs. The World`;
+      renderHero(profile);
+      renderStats(profile);
+      await loadScores(profile);
+    }
+
+    function renderHero(profile) {
+      document.getElementById('profile-hero').querySelector('.container').innerHTML = `
+        <span class="avatar-circle">${initials(profile.username)}</span>
+        <div>
+          <div class="eyebrow">Community Judge ${profile.verified_judge ? '&middot; Verified' : ''}</div>
+          <h1>@${profile.username}</h1>
+          <p>${[profile.location, profile.created_at ? `Joined ${fmtDateLong(profile.created_at)}` : null, `${profile.battles_judged ?? 0} battles judged`].filter(Boolean).join(' &middot; ')}</p>
+        </div>`;
+    }
+
+    function renderStats(profile) {
+      document.getElementById('profile-stats').innerHTML = `
+        <div><h3>${profile.battles_judged ?? 0}</h3><p>Battles Judged</p></div>
+        <div><h3 id="stat-avg">&mdash;</h3><p>Avg Overall Score</p></div>
+        <div><h3>${profile.verified_judge ? 'Yes' : 'No'}</h3><p>Verified Judge</p></div>
+        <div><h3>${profile.created_at ? fmtDate(profile.created_at) : '—'}</h3><p>Member Since</p></div>`;
+    }
+
+    async function loadScores(profile) {
+      const historyEl = document.getElementById('battle-history');
+      const catEl = document.getElementById('category-averages');
+      try {
+        const { data: myScores, error } = await window.supabaseClient
+          .from('judge_scores')
+          .select('*, battles(battle_number, status, closes_at, battle_products(role, product:products(name)))')
+          .eq('judge_id', profile.user_id)
+          .order('created_at', { ascending: false });
+        if (error) throw error;
+
+        const overallAvgs = (myScores || []).map(avgScore).filter(v => v != null);
+        document.getElementById('stat-avg').textContent = overallAvgs.length
+          ? (overallAvgs.reduce((a, b) => a + b, 0) / overallAvgs.length).toFixed(1)
+          : '—';
+
+        historyEl.innerHTML = (myScores && myScores.length)
+          ? myScores.map(historyItem).join('')
+          : '<div class="empty-state">No battles judged yet.</div>';
+
+        const averages = categoryAverages(myScores || []);
+        catEl.innerHTML = averages.length
+          ? averages.map(a => `
+              <div style="margin-bottom: var(--space-md);">
+                <div style="display:flex; justify-content:space-between; font-size:13px; margin-bottom:4px;"><span style="text-transform:capitalize; font-weight:700;">${a.category}</span><strong>${a.average.toFixed(1)}</strong></div>
+                <div class="split-bar"><div class="split-bar-fill" style="width:${a.average * 10}%;"></div></div>
+              </div>`).join('')
+          : '<div class="empty-state">Judge a few battles to see your category breakdown.</div>';
+      } catch (err) {
+        console.error('loadScores', err);
+        historyEl.innerHTML = '<div class="empty-state">No battles judged yet.</div>';
+        catEl.innerHTML = '<div class="empty-state">Judge a few battles to see your category breakdown.</div>';
+      }
+    }
+
+    function matchupName(s) {
+      const products = (s.battles?.battle_products || []).slice().sort((x, y) => x.role.localeCompare(y.role));
+      const [a, b] = products;
+      return (a && b) ? `${a.product.name} vs. ${b.product.name}` : battleLabel(s.battles?.battle_number);
+    }
+
+    function historyItem(s) {
+      const avg = avgScore(s);
+      const detail = SCORE_CATEGORIES.map(cat => `<div><span class="label">${cat}</span>${s[cat] ?? '—'}</div>`).join('');
+      return `
+        <div class="history-item">
+          <div class="history-item-top">
+            <span class="verdict-id">${battleLabel(s.battles?.battle_number)} &middot; ${fmtDate(s.created_at)}</span>
+            <span class="history-tag">${avg != null ? 'Avg ' + avg.toFixed(1) : ''}</span>
+          </div>
+          <h4>${matchupName(s)}</h4>
+          <div class="history-detail-row">${detail}</div>
+        </div>`;
+    }
+  </script>
+</body>
+</html>
